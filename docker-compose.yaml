@@ -4,7 +4,9 @@ services:
   stats-display:
     image: stats-display
     build: .
-    ports:
-      - "5000:42069"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    labels: 
+      - "traefik.enable=true"
+      - "traefik.http.routers.stats-display.rule=Host(`stats.homelab`)"
+      - "traefik.http.services.stats-display.loadbalancer.server.port=42069"
