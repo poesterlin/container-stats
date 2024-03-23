@@ -24,6 +24,7 @@ async fn index() -> LeptosHtml {
     };
 
     let stats = collect_all_stats(&docker).await;
+    print!("{:?}", stats);
 
     return view! {
         <html lang="en">

@@ -5,6 +5,7 @@ use bollard::Docker;
 use futures_util::stream::StreamExt;
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub struct ContainerStats {
     pub id: String,
     pub name: String,
