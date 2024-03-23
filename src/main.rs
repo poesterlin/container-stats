@@ -75,4 +75,6 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
+
+    println!("Listening on: 42069");
 }
