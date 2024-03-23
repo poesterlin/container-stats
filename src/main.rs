@@ -23,8 +23,7 @@ async fn index() -> LeptosHtml {
         }
     };
 
-    let stats = collect_all_stats(&docker).await;
-    print!("{:?}", stats);
+    let stats: Vec<api::ContainerStats> = collect_all_stats(&docker).await;
 
     return view! {
         <html lang="en">

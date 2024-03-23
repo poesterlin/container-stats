@@ -1,11 +1,9 @@
-
 use bollard::container::{ListContainersOptions, Stats, StatsOptions};
-use bollard::secret::ContainerSummary;
 use bollard::Docker;
 use futures_util::stream::StreamExt;
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ContainerStats {
     pub id: String,
     pub name: String,
@@ -30,20 +28,26 @@ pub async fn collect_all_stats(docker: &Docker) -> Vec<ContainerStats> {
     let mut filter = HashMap::new();
     filter.insert(String::from("status"), vec![String::from("running")]);
 
-    let containers: &Vec<ContainerSummary> = &docker
-        .list_containers(Some(ListContainersOptions {
-            all: true,
-            filters: filter,
-            ..Default::default()
-        }))
-        .await
-        .unwrap();
+    let options = Some(ListContainersOptions {
+        all: true,
+        filters: filter,
+        ..Default::default()
+    });
 
+    let containers = docker.clone().list_containers(options).await.unwrap();
+
+    let mut handles = Vec::new();
     for container in containers {
-        let container_id = container.id.as_ref().unwrap();
-        let status = get_container_stats(&docker, container_id).await;
+        let container_id = container.id.to_owned().unwrap();
+        let d = docker.clone();
+        let job = tokio::spawn(get_container_stats(d, container_id));
+        handles.push(job);
+    }
 
-        match status {
+    println!("Waiting for all jobs to complete");
+
+    for job in handles {
+        match job.await.unwrap() {
             Some(stat) => stats.push(stat.into()),
             None => (),
         }
@@ -52,10 +56,12 @@ pub async fn collect_all_stats(docker: &Docker) -> Vec<ContainerStats> {
     stats
 }
 
-async fn get_container_stats(docker: &Docker, container_id: &str) -> Option<Stats> {
+async fn get_container_stats(docker: Docker, container_id: String) -> Option<Stats> {
+    println!("Getting stats for container: {}", container_id);
+
     let status = docker
         .stats(
-            container_id,
+            container_id.as_str(),
             Some(StatsOptions {
                 stream: false,
                 ..Default::default()
