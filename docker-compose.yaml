@@ -6,7 +6,13 @@ services:
     build: .
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - traefik_web
     labels: 
       - "traefik.enable=true"
       - "traefik.http.routers.stats-display.rule=Host(`stats.homelab`)"
       - "traefik.http.services.stats-display.loadbalancer.server.port=42069"
+
+networks:
+  traefik_web:
+    external: true
