@@ -1,0 +1,10 @@
+version: "3.7"
+
+services: 
+  stats-display:
+    image: stats-display
+    build: .
+    ports:
+      - "5000:42069"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
