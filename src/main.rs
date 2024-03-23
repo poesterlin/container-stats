@@ -71,10 +71,10 @@ async fn main() {
         .route("/", get(index))
         .nest_service("/assets", ServeDir::new("assets"));
 
+    println!("Listening on: 42069");
+
     axum::Server::bind(&"0.0.0.0:42069".parse().unwrap())
         .serve(app.into_make_service())
         .await
         .unwrap();
-
-    println!("Listening on: 42069");
 }
