@@ -8,14 +8,19 @@ const wsUrl = `${wsProtocol}://${window.location.host}/ws`;
 /** @type {WebSocket} */
 let ws;
 
+let lastUpdate = Date.now();
+
 /**
  * update the service list when a message is received
  * @param {MessageEvent} event 
  */
 function listener(event) {
-    /** @type {{ id: string, name: string, memory_usage: string, cpu_usage: string }[]} */
+    /** @type {{ id: string, name: string, memory_usage: string, cpu_usage: string, exited: boolean }[]} */
     const data = JSON.parse(event.data);
-    console.log(data);
+
+    const now = Date.now();
+    console.log("time since last update", now - lastUpdate);
+    lastUpdate = now;
 
     for (const service of data) {
         updateCell(service);
@@ -24,17 +29,27 @@ function listener(event) {
 
 /**
  * update the cell with the new data
- * @param {{ id: string, name: string, memory_usage: string, cpu_usage: string }} data 
+ * @param {{ id: string, name: string, memory_usage: string, cpu_usage: string, exited:boolean }} data 
  */
 function updateCell(data) {
-    // update the service list
+    /** @type {HTMLTableRowElement | null} */
     const service = document.querySelector(`#${data.id}`);
 
     if (service) {
-        service.innerHTML = `
-                 <td>${data.name}</td>
-                 <td>${data.memory_usage}</td>
-                 <td>${data.cpu_usage}</td>`;
+        if (data.exited) {
+            // remove the service from the list
+            service.remove();
+            return;
+        }
+
+
+        // update the memory and cpu usage
+        const memory = service.cells[1];
+        const cpu = service.cells[2];
+
+        memory.textContent = data.memory_usage;
+        cpu.textContent = data.cpu_usage;
+
         return;
     }
 

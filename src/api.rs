@@ -1,6 +1,6 @@
 use bollard::container::{ListContainersOptions, Stats, StatsOptions};
 use bollard::Docker;
-use futures_util::stream::StreamExt;
+use futures::stream::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -10,6 +10,7 @@ pub struct ContainerStats {
     pub name: String,
     pub memory_usage: String,
     pub cpu_usage: String,
+    pub exited: bool,
 }
 
 impl From<Stats> for ContainerStats {
@@ -17,11 +18,22 @@ impl From<Stats> for ContainerStats {
         let id_prefix = "container_";
         let short_id = stats.id.clone().split_off(64 - 8);
         let id = format!("{}{}", id_prefix, short_id);
-        ContainerStats {
-            id,
-            name: stats.name.clone().split_off(1),
-            memory_usage: human_readable_bytes(stats.memory_stats.usage.unwrap_or(0)),
-            cpu_usage: calculate_cpu_percent(stats),
+
+        match stats.memory_stats.usage {
+            Some(memory) => ContainerStats {
+                id,
+                name: stats.name.clone().split_off(1),
+                memory_usage: human_readable_bytes(memory),
+                cpu_usage: calculate_cpu_percent(stats),
+                exited: false,
+            },
+            None => ContainerStats {
+                id,
+                name: stats.name.clone().split_off(1),
+                memory_usage: "Error".to_string(),
+                cpu_usage: "Error".to_string(),
+                exited: true,
+            },
         }
     }
 }
@@ -83,6 +95,22 @@ pub async fn get_container_stats(docker: Docker, container_id: String) -> Option
         Ok(stats) => Some(stats),
         Err(_) => None,
     }
+}
+
+pub async fn get_container_stats_stream(
+    docker: Docker,
+    container_id: String,
+) -> impl futures::Stream<Item = ContainerStats> {
+    docker
+        .stats(
+            container_id.as_str(),
+            Some(StatsOptions {
+                stream: true,
+                ..Default::default()
+            }),
+        )
+        .map(|res| res.unwrap())
+        .map(|stats| stats.into())
 }
 
 fn human_readable_bytes(bytes: u64) -> String {
