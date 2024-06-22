@@ -56,9 +56,30 @@ pub async fn list_running_containers(docker: &Docker) -> Vec<String> {
         .collect()
 }
 
-pub async fn collect_all_stats(docker: &Docker) -> Vec<ContainerStats> {
-    let mut stats: Vec<ContainerStats> = Vec::new();
+pub enum SortKey {
+    Name,
+    Memory,
+    Cpu,
+}
 
+impl From<String> for SortKey {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "name" => SortKey::Name,
+            "memory" => SortKey::Memory,
+            "cpu" => SortKey::Cpu,
+            _ => SortKey::Name,
+        }
+    }
+}
+
+impl Default for SortKey {
+    fn default() -> Self {
+        SortKey::Name
+    }
+}
+
+pub async fn collect_all_stats(docker: &Docker, sort_key: SortKey) -> Vec<ContainerStats> {
     let containers = list_running_containers(docker).await;
 
     let mut handles = Vec::new();
@@ -68,15 +89,30 @@ pub async fn collect_all_stats(docker: &Docker) -> Vec<ContainerStats> {
         handles.push(job);
     }
 
+    let mut stats = Vec::new();
     for job in handles {
         match job.await.unwrap() {
-            Some(stat) => stats.push(stat.into()),
+            Some(stat) => stats.push(stat),
             None => (),
         }
     }
 
-    stats.sort_by(|a, b| a.name.cmp(&b.name));
-    stats
+    match sort_key {
+        SortKey::Name => stats.sort_by(|a, b| a.name.cmp(&b.name)),
+        SortKey::Memory => stats.sort_by(|a, b| {
+            b.memory_stats
+                .usage
+                .unwrap_or(0)
+                .cmp(&a.memory_stats.usage.unwrap_or(0))
+        }),
+        SortKey::Cpu => stats.sort_by(|a, b| {
+            let a_cpu = a.cpu_stats.cpu_usage.total_usage;
+            let b_cpu = b.cpu_stats.cpu_usage.total_usage;
+            b_cpu.cmp(&a_cpu)
+        }),
+    }
+
+    stats.into_iter().map(|stat| stat.into()).collect()
 }
 
 pub async fn get_container_stats(docker: Docker, container_id: String) -> Option<Stats> {

@@ -9,21 +9,38 @@ mod websocket;
 use leptos_axum::LeptosHtml;
 
 use axum::{
-    extract::{ws::WebSocketUpgrade, Extension},
+    extract::{ws::WebSocketUpgrade, Extension, Query},
     response::IntoResponse,
     routing::get,
     Router,
 };
 use bollard::Docker;
 use leptos::view;
+use serde::Deserialize;
 use std::sync::Arc;
 use tower_http::services::ServeDir;
 use tracing::*;
 use websocket::{handle_socket, WsState};
 
-async fn index(Extension(state): Extension<Arc<WsState>>) -> LeptosHtml {
+#[derive(Debug, Deserialize)]
+struct Params {
+    sort_key: Option<String>,
+}
+
+impl Default for Params {
+    fn default() -> Self {
+        Params { sort_key: None }
+    }
+}
+
+async fn index(
+    Extension(state): Extension<Arc<WsState>>,
+    Query(params): Query<Params>,
+) -> LeptosHtml {
+    let sort_key = params.sort_key.clone().unwrap_or_default().into();
+
     let docker = state.docker.lock().await;
-    let stats: Vec<api::ContainerStats> = collect_all_stats(&docker).await;
+    let stats: Vec<api::ContainerStats> = collect_all_stats(&docker, sort_key).await;
 
     return view! {
         <html lang="en">
@@ -39,9 +56,9 @@ async fn index(Extension(state): Extension<Arc<WsState>>) -> LeptosHtml {
             <table>
                 <thead>
                     <tr>
-                        <th>Container Name</th>
-                        <th>Memory Usage</th>
-                        <th>CPU Usage</th>
+                        <th><a href="?sort_key=name">Container Name</a></th>
+                        <th><a href="?sort_key=memory">Memory Usage</a></th>
+                        <th><a href="?sort_key=cpu">CPU Usage</a></th>
                     </tr>
                 </thead>
                 <tbody>
