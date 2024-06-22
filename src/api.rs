@@ -75,6 +75,7 @@ pub async fn collect_all_stats(docker: &Docker) -> Vec<ContainerStats> {
         }
     }
 
+    stats.sort_by(|a, b| a.name.cmp(&b.name));
     stats
 }
 

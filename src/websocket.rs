@@ -34,8 +34,22 @@ pub async fn handle_socket(socket: WebSocket, state: Arc<WsState>) {
     }
 }
 
-async fn broadcast(state: Arc<WsState>, services: Vec<ContainerStats>) -> bool {
+async fn broadcast(state: Arc<WsState>, mut services: Vec<ContainerStats>) -> bool {
     let mut txs = state.txs.lock().await;
+
+    // remove duplicates from the list
+    let length_before = services.len();
+
+    services.sort_by(|a, b| a.name.cmp(&b.name));
+    services.dedup_by(|a, b| a.id == b.id);
+
+    let length_after = services.len();
+    if length_before != length_after {
+        println!(
+            "Removed {} duplicate services",
+            length_before - length_after
+        );
+    }
 
     let mut peers_to_remove = Vec::new();
     for (peer_id, tx) in txs.iter_mut() {
