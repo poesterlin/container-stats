@@ -5,9 +5,7 @@ use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 use tracing::*;
 
-use crate::api::{
-    collect_all_stats, get_container_stats_stream, list_running_containers, ContainerStats,
-};
+use crate::api::{get_container_stats_stream, list_running_containers, ContainerStats};
 
 pub struct WsState {
     txs: Mutex<HashMap<String, SplitSink<WebSocket, Message>>>,
@@ -85,7 +83,5 @@ async fn broadcast_loop(state: Arc<WsState>) {
             info!("No more connected peers");
             return ();
         }
-
-        // tokio::time::sleep(std::time::Duration::from_secs(1)).await;
     }
 }
