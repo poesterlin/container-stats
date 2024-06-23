@@ -5,7 +5,7 @@ use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 use tracing::*;
 
-use crate::api::{get_container_stats_stream, list_running_containers, ContainerStats};
+use crate::api::{collect_all_stats, ContainerStats};
 
 pub struct WsState {
     txs: Mutex<HashMap<String, SplitSink<WebSocket, Message>>>,
@@ -73,26 +73,10 @@ async fn broadcast(state: Arc<WsState>, mut services: Vec<ContainerStats>) -> bo
 }
 
 async fn broadcast_loop(state: Arc<WsState>) {
-    let mut streams = HashMap::new();
-
     loop {
         let docker = state.docker.lock().await;
-        let stats = list_running_containers(&docker).await;
-
-        for container_id in stats {
-            if !streams.contains_key(&container_id) {
-                let stream = get_container_stats_stream(docker.clone(), container_id.clone()).await;
-                streams.insert(container_id, stream);
-            }
-        }
-
-        let mut updates = Vec::new();
-        for stream in streams.values_mut() {
-            let stats = stream.next().await.unwrap();
-            updates.push(stats);
-        }
-
-        let still_connected = broadcast(state.clone(), updates).await;
+        let stats = collect_all_stats(&docker).await;
+        let still_connected = broadcast(state.clone(), stats).await;
         if !still_connected {
             info!("No more connected peers");
             return ();
