@@ -75,7 +75,7 @@ async fn broadcast(state: Arc<WsState>, mut services: Vec<ContainerStats>) -> bo
 async fn broadcast_loop(state: Arc<WsState>) {
     loop {
         let docker = state.docker.lock().await;
-        let stats = collect_all_stats(&docker).await;
+        let stats = collect_all_stats(&docker, crate::api::SortKey::Name).await;
         let still_connected = broadcast(state.clone(), stats).await;
         if !still_connected {
             info!("No more connected peers");
