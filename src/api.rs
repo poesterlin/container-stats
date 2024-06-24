@@ -16,7 +16,7 @@ pub struct ContainerStats {
 impl From<Stats> for ContainerStats {
     fn from(stats: Stats) -> Self {
         let id_prefix = "container_";
-        let short_id = stats.id.clone().split_off(64 - 8);
+        let short_id = stats.id.clone();
         let id = format!("{}{}", id_prefix, short_id);
 
         match stats.memory_stats.usage {

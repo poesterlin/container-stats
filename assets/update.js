@@ -25,6 +25,13 @@ function listener(event) {
     for (const service of data) {
         updateCell(service);
     }
+
+    const result = document.querySelector('#result');
+    if (result) {
+        setTimeout(() => {
+            result.remove();
+        }, 3000);
+    }
 }
 
 /**
@@ -44,8 +51,8 @@ function updateCell(data) {
 
 
         // update the memory and cpu usage
-        const memory = service.cells[1];
-        const cpu = service.cells[2];
+        const memory = service.cells[2];
+        const cpu = service.cells[3];
 
         memory.textContent = data.memory_usage;
         cpu.textContent = data.cpu_usage;
@@ -60,21 +67,22 @@ function updateCell(data) {
         return;
     }
 
-    console.log(data);
-
     // create a new row at the end of the table
     const row = table.insertRow(-1);
     row.id = data.id;
 
     // add new cells to the row
     const name = row.insertCell(0);
-    const memory = row.insertCell(1);
-    const cpu = row.insertCell(2);
+    const image = row.insertCell(1);
+    const memory = row.insertCell(2);
+    const cpu = row.insertCell(3);
 
     // set the cell values
     name.textContent = data.name;
     memory.textContent = data.memory_usage;
     cpu.textContent = data.cpu_usage;
+
+    image.innerHTML = `<a href="?/restart=${data.id}"> <img src="/assets/reload.svg" alt="Restart ${data.name}" />`;
 }
 
 /**
@@ -87,6 +95,11 @@ function connectSocket() {
     ws.addEventListener('close', () => {
         setTimeout(connectSocket, 1000);
     });
+
+    if (location.search.includes('restart')) {
+        // remove the query string from the url
+        history.pushState({}, document.title, location.pathname);
+    }
 }
 
 connectSocket();
