@@ -79,11 +79,14 @@ function updateCell(data) {
         }
 
 
-        // update the memory and cpu usage
-        const memory = service.cells[3];
-        const cpu = service.cells[4];
-        const diskRead = service.cells[5];
-        const diskWrite = service.cells[6];
+        const memory = service.querySelector('.memory-cell');
+        const cpu = service.querySelector('.cpu-cell');
+        const diskRead = service.querySelector('.disk-read-cell');
+        const diskWrite = service.querySelector('.disk-write-cell');
+
+        if (!memory || !cpu || !diskRead || !diskWrite) {
+            return;
+        }
 
         memory.textContent = data.memory_usage;
         cpu.textContent = data.cpu_usage;
@@ -117,6 +120,10 @@ function updateCell(data) {
     name.className = 'name-cell';
     restart.className = 'action-cell';
     stop.className = 'action-cell';
+    memory.className = 'memory-cell';
+    cpu.className = 'cpu-cell';
+    diskRead.className = 'disk-read-cell';
+    diskWrite.className = 'disk-write-cell';
 
     // set the cell values
     name.textContent = data.name;
@@ -125,8 +132,8 @@ function updateCell(data) {
     diskRead.textContent = data.disk_read;
     diskWrite.textContent = data.disk_write;
 
-    restart.innerHTML = `<a href="?restart=${data.id}"><img src="/assets/reload.svg" alt="Restart ${data.name}" /></a>`;
-    stop.innerHTML = `<a class="danger-action" href="?stop=${data.id}">Stop Container</a>`;
+    restart.innerHTML = `<a class="icon-action" href="?restart=${data.id}" title="Restart ${data.name}"><img src="/assets/reload.svg" alt="Restart ${data.name}" /></a>`;
+    stop.innerHTML = `<a class="icon-action icon-action-danger" href="?stop=${data.id}" title="Stop ${data.name}"><img src="/assets/stop.svg" alt="Stop ${data.name}" /></a>`;
 }
 
 /**

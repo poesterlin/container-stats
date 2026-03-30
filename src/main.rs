@@ -150,12 +150,14 @@ async fn index(
                                                 </a>
                                             </td>
                                             <td class="action-cell">
-                                                <a class="danger-action" href={"?stop=".to_owned() + &stat.id}>Stop Container</a>
+                                                <a class="icon-action icon-action-danger" href={"?stop=".to_owned() + &stat.id} title="Stop container">
+                                                    <img src="/assets/stop.svg" alt="Stop"></img>
+                                                </a>
                                             </td>
-                                            <td>{ stat.memory_usage }</td>
-                                            <td>{ stat.cpu_usage }</td>
-                                            <td>{ stat.disk_read }</td>
-                                            <td>{ stat.disk_write }</td>
+                                            <td class="memory-cell">{ stat.memory_usage }</td>
+                                            <td class="cpu-cell">{ stat.cpu_usage }</td>
+                                            <td class="disk-read-cell">{ stat.disk_read }</td>
+                                            <td class="disk-write-cell">{ stat.disk_write }</td>
                                         </tr>
                                     })
                                     .collect::<Vec<_>>()}

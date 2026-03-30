@@ -144,7 +144,7 @@ tbody tr:hover {
 
 .action-cell {
   text-align: center;
-  min-width: 130px;
+  min-width: 64px;
 }
 
 a {
@@ -172,21 +172,18 @@ thead a {
   background: #f8f4eb;
 }
 
-.danger-action {
-  display: inline-block;
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid #e5bcbc;
-  background: #fff;
-  color: #7d1f1f;
-  text-decoration: none;
-  font-weight: 700;
-  white-space: nowrap;
+.icon-action-danger {
+  border-color: #e5bcbc;
 }
 
-.danger-action:hover {
-  background: var(--danger-soft);
+.icon-action-danger:hover {
   border-color: #d89e9e;
+  background: var(--danger-soft);
+}
+
+.icon-action img {
+  width: 18px;
+  height: 18px;
 }
 
 #result {
@@ -231,7 +228,7 @@ thead a {
     font-size: 0.9rem;
   }
 
-  .danger-action {
-    padding: 5px 8px;
+  .action-cell {
+    min-width: 48px;
   }
 }
