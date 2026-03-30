@@ -109,7 +109,7 @@ async fn index(
                 <meta charset="UTF-8"></meta>
                 <meta name="viewport" content="width=device-width, initial-scale=1"></meta>
                 <link href="/assets/index.css" rel="stylesheet"></link>
-                <script src="/assets/update.js"></script>
+                <script src="/assets/update.js?v=2"></script>
             </head>
             <body>
                 <main class="app-shell">
@@ -154,10 +154,10 @@ async fn index(
                                                     <img src="/assets/stop.svg" alt="Stop"></img>
                                                 </a>
                                             </td>
-                                            <td class="memory-cell">{ stat.memory_usage }</td>
-                                            <td class="cpu-cell">{ stat.cpu_usage }</td>
-                                            <td class="disk-read-cell">{ stat.disk_read }</td>
-                                            <td class="disk-write-cell">{ stat.disk_write }</td>
+                                            <td class="memory-cell" data-col="memory">{ stat.memory_usage }</td>
+                                            <td class="cpu-cell" data-col="cpu">{ stat.cpu_usage }</td>
+                                            <td class="disk-read-cell" data-col="disk-read">{ stat.disk_read }</td>
+                                            <td class="disk-write-cell" data-col="disk-write">{ stat.disk_write }</td>
                                         </tr>
                                     })
                                     .collect::<Vec<_>>()}

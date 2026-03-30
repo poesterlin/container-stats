@@ -79,10 +79,10 @@ function updateCell(data) {
         }
 
 
-        const memory = service.querySelector('.memory-cell');
-        const cpu = service.querySelector('.cpu-cell');
-        const diskRead = service.querySelector('.disk-read-cell');
-        const diskWrite = service.querySelector('.disk-write-cell');
+        const memory = service.querySelector('[data-col="memory"]');
+        const cpu = service.querySelector('[data-col="cpu"]');
+        const diskRead = service.querySelector('[data-col="disk-read"]');
+        const diskWrite = service.querySelector('[data-col="disk-write"]');
 
         if (!memory || !cpu || !diskRead || !diskWrite) {
             return;
@@ -124,6 +124,10 @@ function updateCell(data) {
     cpu.className = 'cpu-cell';
     diskRead.className = 'disk-read-cell';
     diskWrite.className = 'disk-write-cell';
+    memory.dataset.col = 'memory';
+    cpu.dataset.col = 'cpu';
+    diskRead.dataset.col = 'disk-read';
+    diskWrite.dataset.col = 'disk-write';
 
     // set the cell values
     name.textContent = data.name;
