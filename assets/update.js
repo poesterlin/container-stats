@@ -51,8 +51,8 @@ function updateCell(data) {
 
 
         // update the memory and cpu usage
-        const memory = service.cells[2];
-        const cpu = service.cells[3];
+        const memory = service.cells[3];
+        const cpu = service.cells[4];
 
         memory.textContent = data.memory_usage;
         cpu.textContent = data.cpu_usage;
@@ -73,16 +73,18 @@ function updateCell(data) {
 
     // add new cells to the row
     const name = row.insertCell(0);
-    const image = row.insertCell(1);
-    const memory = row.insertCell(2);
-    const cpu = row.insertCell(3);
+    const restart = row.insertCell(1);
+    const stop = row.insertCell(2);
+    const memory = row.insertCell(3);
+    const cpu = row.insertCell(4);
 
     // set the cell values
     name.textContent = data.name;
     memory.textContent = data.memory_usage;
     cpu.textContent = data.cpu_usage;
 
-    image.innerHTML = `<a href="?/restart=${data.id}"> <img src="/assets/reload.svg" alt="Restart ${data.name}" />`;
+    restart.innerHTML = `<a href="?restart=${data.id}"><img src="/assets/reload.svg" alt="Restart ${data.name}" /></a>`;
+    stop.innerHTML = `<a href="?stop=${data.id}">Stop</a>`;
 }
 
 /**
@@ -96,7 +98,7 @@ function connectSocket() {
         setTimeout(connectSocket, 1000);
     });
 
-    if (location.search.includes('restart')) {
+    if (location.search.includes('restart') || location.search.includes('stop')) {
         // remove the query string from the url
         history.pushState({}, document.title, location.pathname);
     }

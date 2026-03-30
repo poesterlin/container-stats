@@ -14,7 +14,10 @@ use axum::{
     routing::get,
     Router,
 };
-use bollard::{container::RestartContainerOptions, Docker};
+use bollard::{
+    container::{RestartContainerOptions, StopContainerOptions},
+    Docker,
+};
 use leptos::view;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -26,6 +29,7 @@ use websocket::{handle_socket, WsState};
 struct Params {
     sort_key: Option<String>,
     restart: Option<String>,
+    stop: Option<String>,
 }
 
 impl Default for Params {
@@ -33,6 +37,7 @@ impl Default for Params {
         Params {
             sort_key: None,
             restart: None,
+            stop: None,
         }
     }
 }
@@ -42,12 +47,13 @@ async fn index(
     Query(params): Query<Params>,
 ) -> LeptosHtml {
     let sort_key = params.sort_key.clone().unwrap_or_default().into();
-    let container_id = params.restart.clone();
+    let restart_container_id = params.restart.clone();
+    let stop_container_id = params.stop.clone();
 
     let docker = state.docker.lock().await;
 
-    let mut restart_result = None;
-    if let Some(container_id) = container_id {
+    let mut action_result = None;
+    if let Some(container_id) = restart_container_id {
         // remove container_ prefix from id
         let container_id = container_id.trim_start_matches("container_");
 
@@ -56,21 +62,40 @@ async fn index(
             Ok(_) => {
                 info!("Restarted container {}", container_id);
                 println!("Restarted container {}", container_id);
-                restart_result = Some("Container restarted");
+                action_result = Some("Container restarted");
             }
             Err(e) => {
                 error!("Error restarting container {}: {}", container_id, e);
                 println!("Error restarting container {}: {}", container_id, e);
-                restart_result = Some("Error restarting container");
+                action_result = Some("Error restarting container");
+            }
+        }
+    }
+
+    if let Some(container_id) = stop_container_id {
+        // remove container_ prefix from id
+        let container_id = container_id.trim_start_matches("container_");
+
+        let options = StopContainerOptions { t: 10 };
+        match docker.stop_container(&container_id, Some(options)).await {
+            Ok(_) => {
+                info!("Stopped container {}", container_id);
+                println!("Stopped container {}", container_id);
+                action_result = Some("Container stopped");
+            }
+            Err(e) => {
+                error!("Error stopping container {}: {}", container_id, e);
+                println!("Error stopping container {}: {}", container_id, e);
+                action_result = Some("Error stopping container");
             }
         }
     }
 
     let stats: Vec<api::ContainerStats> = collect_all_stats(&docker, sort_key).await;
 
-    let result_view = match restart_result {
+    let result_view = match action_result {
         Some(_) => view! {
-            <p id="result">{restart_result.unwrap_or_default()}</p>
+            <p id="result">{action_result.unwrap_or_default()}</p>
         },
         None => view! {
             <p></p>
@@ -92,7 +117,9 @@ async fn index(
                 <table>
                 <thead>
                     <tr>
-                        <th colspan="2"><a href="?sort_key=name">Container Name</a></th>
+                        <th><a href="?sort_key=name">Container Name</a></th>
+                        <th>Restart</th>
+                        <th>Actions</th>
                         <th><a href="?sort_key=memory">Memory Usage</a></th>
                         <th><a href="?sort_key=cpu">CPU Usage</a></th>
                     </tr>
@@ -104,7 +131,12 @@ async fn index(
                                 <td>{ stat.name }</td>
                                 <td>
                                     <a href="?restart=".to_owned() + &stat.id>
-                                        <img src="/assets/reload.svg" ></img>
+                                        <img src="/assets/reload.svg" alt="Restart"></img>
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="?stop=".to_owned() + &stat.id>
+                                        Stop
                                     </a>
                                 </td>
                                 <td>{ stat.memory_usage }</td>
