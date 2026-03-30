@@ -135,6 +135,8 @@ async fn index(
                                     <th>Stop</th>
                                     <th><a href="?sort_key=memory">Memory Usage</a></th>
                                     <th><a href="?sort_key=cpu">CPU Usage</a></th>
+                                    <th><a href="?sort_key=disk_read">Disk Read</a></th>
+                                    <th><a href="?sort_key=disk_write">Disk Write</a></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -152,6 +154,8 @@ async fn index(
                                             </td>
                                             <td>{ stat.memory_usage }</td>
                                             <td>{ stat.cpu_usage }</td>
+                                            <td>{ stat.disk_read }</td>
+                                            <td>{ stat.disk_write }</td>
                                         </tr>
                                     })
                                     .collect::<Vec<_>>()}

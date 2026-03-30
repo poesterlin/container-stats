@@ -45,7 +45,7 @@ function setLastUpdated() {
  * @param {MessageEvent} event 
  */
 function listener(event) {
-    /** @type {{ id: string, name: string, memory_usage: string, cpu_usage: string, exited: boolean }[]} */
+    /** @type {{ id: string, name: string, memory_usage: string, cpu_usage: string, disk_read: string, disk_write: string, exited: boolean }[]} */
     const data = JSON.parse(event.data);
 
     lastUpdate = Date.now();
@@ -65,7 +65,7 @@ function listener(event) {
 
 /**
  * update the cell with the new data
- * @param {{ id: string, name: string, memory_usage: string, cpu_usage: string, exited:boolean }} data 
+ * @param {{ id: string, name: string, memory_usage: string, cpu_usage: string, disk_read: string, disk_write: string, exited:boolean }} data 
  */
 function updateCell(data) {
     /** @type {HTMLTableRowElement | null} */
@@ -82,9 +82,13 @@ function updateCell(data) {
         // update the memory and cpu usage
         const memory = service.cells[3];
         const cpu = service.cells[4];
+        const diskRead = service.cells[5];
+        const diskWrite = service.cells[6];
 
         memory.textContent = data.memory_usage;
         cpu.textContent = data.cpu_usage;
+        diskRead.textContent = data.disk_read;
+        diskWrite.textContent = data.disk_write;
 
         return;
     }
@@ -106,6 +110,8 @@ function updateCell(data) {
     const stop = row.insertCell(2);
     const memory = row.insertCell(3);
     const cpu = row.insertCell(4);
+    const diskRead = row.insertCell(5);
+    const diskWrite = row.insertCell(6);
 
     // set classes for consistency
     name.className = 'name-cell';
@@ -116,6 +122,8 @@ function updateCell(data) {
     name.textContent = data.name;
     memory.textContent = data.memory_usage;
     cpu.textContent = data.cpu_usage;
+    diskRead.textContent = data.disk_read;
+    diskWrite.textContent = data.disk_write;
 
     restart.innerHTML = `<a href="?restart=${data.id}"><img src="/assets/reload.svg" alt="Restart ${data.name}" /></a>`;
     stop.innerHTML = `<a href="?stop=${data.id}">Stop</a>`;

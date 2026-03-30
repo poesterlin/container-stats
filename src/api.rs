@@ -10,6 +10,8 @@ pub struct ContainerStats {
     pub name: String,
     pub memory_usage: String,
     pub cpu_usage: String,
+    pub disk_read: String,
+    pub disk_write: String,
     pub exited: bool,
 }
 
@@ -24,7 +26,9 @@ impl From<Stats> for ContainerStats {
                 id,
                 name: stats.name.clone().split_off(1),
                 memory_usage: human_readable_bytes(memory),
-                cpu_usage: calculate_cpu_percent(stats),
+                cpu_usage: calculate_cpu_percent(&stats),
+                disk_read: calculate_disk_read(&stats),
+                disk_write: calculate_disk_write(&stats),
                 exited: false,
             },
             None => ContainerStats {
@@ -32,6 +36,8 @@ impl From<Stats> for ContainerStats {
                 name: stats.name.clone().split_off(1),
                 memory_usage: "Error".to_string(),
                 cpu_usage: "Error".to_string(),
+                disk_read: "Error".to_string(),
+                disk_write: "Error".to_string(),
                 exited: true,
             },
         }
@@ -164,7 +170,7 @@ fn human_readable_bytes(bytes: u64) -> String {
     }
 }
 
-fn calculate_cpu_percent(stats: Stats) -> String {
+fn calculate_cpu_percent(stats: &Stats) -> String {
     let cpu_delta =
         stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
     let system_delta = stats.cpu_stats.system_cpu_usage.unwrap_or(0)
@@ -173,4 +179,34 @@ fn calculate_cpu_percent(stats: Stats) -> String {
     let cpu_percent = (cpu_delta as f64 / system_delta as f64) * 100.0;
 
     format!("{:.2}%", cpu_percent)
+}
+
+fn calculate_disk_read(stats: &Stats) -> String {
+    let mut total_read: u64 = 0;
+    
+    if let Some(io_service_bytes) = &stats.blkio_stats.io_service_bytes_recursive {
+        for entry in io_service_bytes {
+            let op = entry.op.to_lowercase();
+            if op == "read" {
+                total_read += entry.value;
+            }
+        }
+    }
+    
+    human_readable_bytes(total_read)
+}
+
+fn calculate_disk_write(stats: &Stats) -> String {
+    let mut total_write: u64 = 0;
+    
+    if let Some(io_service_bytes) = &stats.blkio_stats.io_service_bytes_recursive {
+        for entry in io_service_bytes {
+            let op = entry.op.to_lowercase();
+            if op == "write" {
+                total_write += entry.value;
+            }
+        }
+    }
+    
+    human_readable_bytes(total_write)
 }
