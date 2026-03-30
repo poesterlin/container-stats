@@ -126,7 +126,7 @@ function updateCell(data) {
     diskWrite.textContent = data.disk_write;
 
     restart.innerHTML = `<a href="?restart=${data.id}"><img src="/assets/reload.svg" alt="Restart ${data.name}" /></a>`;
-    stop.innerHTML = `<a href="?stop=${data.id}">Stop</a>`;
+    stop.innerHTML = `<a class="danger-action" href="?stop=${data.id}">Stop Container</a>`;
 }
 
 /**

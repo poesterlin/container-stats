@@ -66,6 +66,8 @@ pub enum SortKey {
     Name,
     Memory,
     Cpu,
+    DiskRead,
+    DiskWrite,
 }
 
 impl From<String> for SortKey {
@@ -74,6 +76,8 @@ impl From<String> for SortKey {
             "name" => SortKey::Name,
             "memory" => SortKey::Memory,
             "cpu" => SortKey::Cpu,
+            "disk_read" => SortKey::DiskRead,
+            "disk_write" => SortKey::DiskWrite,
             _ => SortKey::Name,
         }
     }
@@ -109,6 +113,16 @@ pub async fn collect_all_stats(docker: &Docker, sort_key: SortKey) -> Vec<Contai
             let a_cpu = a.cpu_stats.cpu_usage.total_usage;
             let b_cpu = b.cpu_stats.cpu_usage.total_usage;
             b_cpu.cmp(&a_cpu)
+        }),
+        SortKey::DiskRead => stats.sort_by(|a, b| {
+            let a_read = total_disk_read(a);
+            let b_read = total_disk_read(b);
+            b_read.cmp(&a_read)
+        }),
+        SortKey::DiskWrite => stats.sort_by(|a, b| {
+            let a_write = total_disk_write(a);
+            let b_write = total_disk_write(b);
+            b_write.cmp(&a_write)
         }),
     }
 
@@ -182,8 +196,16 @@ fn calculate_cpu_percent(stats: &Stats) -> String {
 }
 
 fn calculate_disk_read(stats: &Stats) -> String {
+    human_readable_bytes(total_disk_read(stats))
+}
+
+fn calculate_disk_write(stats: &Stats) -> String {
+    human_readable_bytes(total_disk_write(stats))
+}
+
+fn total_disk_read(stats: &Stats) -> u64 {
     let mut total_read: u64 = 0;
-    
+
     if let Some(io_service_bytes) = &stats.blkio_stats.io_service_bytes_recursive {
         for entry in io_service_bytes {
             let op = entry.op.to_lowercase();
@@ -192,13 +214,13 @@ fn calculate_disk_read(stats: &Stats) -> String {
             }
         }
     }
-    
-    human_readable_bytes(total_read)
+
+    total_read
 }
 
-fn calculate_disk_write(stats: &Stats) -> String {
+fn total_disk_write(stats: &Stats) -> u64 {
     let mut total_write: u64 = 0;
-    
+
     if let Some(io_service_bytes) = &stats.blkio_stats.io_service_bytes_recursive {
         for entry in io_service_bytes {
             let op = entry.op.to_lowercase();
@@ -207,6 +229,6 @@ fn calculate_disk_write(stats: &Stats) -> String {
             }
         }
     }
-    
-    human_readable_bytes(total_write)
+
+    total_write
 }

@@ -150,7 +150,7 @@ async fn index(
                                                 </a>
                                             </td>
                                             <td class="action-cell">
-                                                <a class="danger-action" href={"?stop=".to_owned() + &stat.id}>Stop</a>
+                                                <a class="danger-action" href={"?stop=".to_owned() + &stat.id}>Stop Container</a>
                                             </td>
                                             <td>{ stat.memory_usage }</td>
                                             <td>{ stat.cpu_usage }</td>
