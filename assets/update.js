@@ -136,8 +136,13 @@ function updateCell(data) {
     diskRead.textContent = data.disk_read;
     diskWrite.textContent = data.disk_write;
 
-    restart.innerHTML = `<a class="icon-action" href="?restart=${data.id}" title="Restart ${data.name}"><img src="/assets/reload.svg" alt="Restart ${data.name}" /></a>`;
-    stop.innerHTML = `<a class="icon-action icon-action-danger" href="?stop=${data.id}" title="Stop ${data.name}"><img src="/assets/stop.svg" alt="Stop ${data.name}" /></a>`;
+    const params = new URLSearchParams(window.location.search);
+    const sortKey = params.get('sort_key');
+    const restartUrl = sortKey ? `?sort_key=${encodeURIComponent(sortKey)}&restart=${data.id}` : `?restart=${data.id}`;
+    const stopUrl = sortKey ? `?sort_key=${encodeURIComponent(sortKey)}&stop=${data.id}` : `?stop=${data.id}`;
+
+    restart.innerHTML = `<a class="icon-action" href="${restartUrl}" title="Restart ${data.name}"><img src="/assets/reload.svg" alt="Restart ${data.name}" /></a>`;
+    stop.innerHTML = `<a class="icon-action icon-action-danger" href="${stopUrl}" title="Stop ${data.name}"><img src="/assets/stop.svg" alt="Stop ${data.name}" /></a>`;
 }
 
 /**

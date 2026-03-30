@@ -46,6 +46,7 @@ async fn index(
     Extension(state): Extension<Arc<WsState>>,
     Query(params): Query<Params>,
 ) -> LeptosHtml {
+    let current_sort_key = params.sort_key.clone();
     let sort_key = params.sort_key.clone().unwrap_or_default().into();
     let restart_container_id = params.restart.clone();
     let stop_container_id = params.stop.clone();
@@ -102,6 +103,16 @@ async fn index(
         },
     };
 
+    let restart_base = match &current_sort_key {
+        Some(sort_key) if !sort_key.is_empty() => format!("?sort_key={}&restart=", sort_key),
+        _ => "?restart=".to_string(),
+    };
+
+    let stop_base = match &current_sort_key {
+        Some(sort_key) if !sort_key.is_empty() => format!("?sort_key={}&stop=", sort_key),
+        _ => "?stop=".to_string(),
+    };
+
     return view! {
         <html lang="en">
             <head>
@@ -109,7 +120,7 @@ async fn index(
                 <meta charset="UTF-8"></meta>
                 <meta name="viewport" content="width=device-width, initial-scale=1"></meta>
                 <link href="/assets/index.css" rel="stylesheet"></link>
-                <script src="/assets/update.js?v=2"></script>
+                <script src="/assets/update.js?v=3"></script>
             </head>
             <body>
                 <main class="app-shell">
@@ -145,12 +156,12 @@ async fn index(
                                         <tr id={stat.id.clone()}>
                                             <td class="name-cell">{ stat.name }</td>
                                             <td class="action-cell">
-                                                <a class="icon-action" href={"?restart=".to_owned() + &stat.id} title="Restart container">
+                                                <a class="icon-action" href={restart_base.clone() + &stat.id} title="Restart container">
                                                     <img src="/assets/reload.svg" alt="Restart"></img>
                                                 </a>
                                             </td>
                                             <td class="action-cell">
-                                                <a class="icon-action icon-action-danger" href={"?stop=".to_owned() + &stat.id} title="Stop container">
+                                                <a class="icon-action icon-action-danger" href={stop_base.clone() + &stat.id} title="Stop container">
                                                     <img src="/assets/stop.svg" alt="Stop"></img>
                                                 </a>
                                             </td>
