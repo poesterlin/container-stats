@@ -1,6 +1,6 @@
 use bollard::container::{ListContainersOptions, Stats, StatsOptions};
 use bollard::Docker;
-use futures::stream::StreamExt;
+use futures::stream::{self, StreamExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -43,7 +43,7 @@ pub async fn list_running_containers(docker: &Docker) -> Vec<String> {
     filter.insert(String::from("status"), vec![String::from("running")]);
 
     let options = Some(ListContainersOptions {
-        all: true,
+        all: false,
         filters: filter,
         ..Default::default()
     });
@@ -80,22 +80,16 @@ impl Default for SortKey {
 }
 
 pub async fn collect_all_stats(docker: &Docker, sort_key: SortKey) -> Vec<ContainerStats> {
+    const MAX_CONCURRENT_STATS: usize = 32;
+
     let containers = list_running_containers(docker).await;
 
-    let mut handles = Vec::new();
-    for container_id in containers {
-        let d = docker.clone();
-        let job = tokio::spawn(get_container_stats(d, container_id));
-        handles.push(job);
-    }
-
-    let mut stats = Vec::new();
-    for job in handles {
-        match job.await.unwrap() {
-            Some(stat) => stats.push(stat),
-            None => (),
-        }
-    }
+    let mut stats = stream::iter(containers)
+        .map(|container_id| get_container_stats(docker.clone(), container_id))
+        .buffer_unordered(MAX_CONCURRENT_STATS)
+        .filter_map(|stat| async move { stat })
+        .collect::<Vec<_>>()
+        .await;
 
     match sort_key {
         SortKey::Name => stats.sort_by(|a, b| a.name.cmp(&b.name)),

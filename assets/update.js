@@ -11,6 +11,36 @@ let ws;
 let lastUpdate = Date.now();
 
 /**
+ * @param {'connected' | 'connecting' | 'disconnected'} state
+ */
+function setSocketStatus(state) {
+    const el = document.querySelector('#ws-status');
+    if (!el) {
+        return;
+    }
+
+    const labels = {
+        connected: 'Live',
+        connecting: 'Connecting',
+        disconnected: 'Disconnected'
+    };
+
+    el.textContent = labels[state];
+    el.dataset.state = state;
+}
+
+function setLastUpdated() {
+    const el = document.querySelector('#last-updated');
+    if (!el) {
+        return;
+    }
+
+    const now = new Date();
+    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    el.textContent = time;
+}
+
+/**
  * update the service list when a message is received
  * @param {MessageEvent} event 
  */
@@ -18,9 +48,8 @@ function listener(event) {
     /** @type {{ id: string, name: string, memory_usage: string, cpu_usage: string, exited: boolean }[]} */
     const data = JSON.parse(event.data);
 
-    const now = Date.now();
-    console.log("time since last update", now - lastUpdate);
-    lastUpdate = now;
+    lastUpdate = Date.now();
+    setLastUpdated();
 
     for (const service of data) {
         updateCell(service);
@@ -61,14 +90,14 @@ function updateCell(data) {
     }
 
     // add a new service to the list
-    const table = document.querySelector('table');
+    const body = document.querySelector('tbody');
 
-    if (!table) {
+    if (!body) {
         return;
     }
 
     // create a new row at the end of the table
-    const row = table.insertRow(-1);
+    const row = body.insertRow(-1);
     row.id = data.id;
 
     // add new cells to the row
@@ -77,6 +106,11 @@ function updateCell(data) {
     const stop = row.insertCell(2);
     const memory = row.insertCell(3);
     const cpu = row.insertCell(4);
+
+    // set classes for consistency
+    name.className = 'name-cell';
+    restart.className = 'action-cell';
+    stop.className = 'action-cell';
 
     // set the cell values
     name.textContent = data.name;
@@ -91,10 +125,16 @@ function updateCell(data) {
  * reconnect to the server when the connection is closed
  */
 function connectSocket() {
+    setSocketStatus('connecting');
     ws = new WebSocket(wsUrl);
 
     ws.addEventListener('message', listener);
+    ws.addEventListener('open', () => {
+        setSocketStatus('connected');
+        setLastUpdated();
+    });
     ws.addEventListener('close', () => {
+        setSocketStatus('disconnected');
         setTimeout(connectSocket, 1000);
     });
 

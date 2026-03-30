@@ -95,7 +95,7 @@ async fn index(
 
     let result_view = match action_result {
         Some(_) => view! {
-            <p id="result">{action_result.unwrap_or_default()}</p>
+            <p id="result" role="status">{action_result.unwrap_or_default()}</p>
         },
         None => view! {
             <p></p>
@@ -112,41 +112,54 @@ async fn index(
                 <script src="/assets/update.js"></script>
             </head>
             <body>
-                <h1>Container Stats</h1>
-                {result_view}
-                <table>
-                <thead>
-                    <tr>
-                        <th><a href="?sort_key=name">Container Name</a></th>
-                        <th>Restart</th>
-                        <th>Actions</th>
-                        <th><a href="?sort_key=memory">Memory Usage</a></th>
-                        <th><a href="?sort_key=cpu">CPU Usage</a></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {stats.into_iter()
-                        .map(|stat| view! {
-                            <tr id={stat.id.clone()}>
-                                <td>{ stat.name }</td>
-                                <td>
-                                    <a href="?restart=".to_owned() + &stat.id>
-                                        <img src="/assets/reload.svg" alt="Restart"></img>
-                                    </a>
-                                </td>
-                                <td>
-                                    <a href="?stop=".to_owned() + &stat.id>
-                                        Stop
-                                    </a>
-                                </td>
-                                <td>{ stat.memory_usage }</td>
-                                <td>{ stat.cpu_usage }</td>
-                            </tr>
-                        })
-                        .collect::<Vec<_>>()}
-                </tbody>
-            </table>
-        </body>
+                <main class="app-shell">
+                    <header class="page-header">
+                        <div>
+                            <h1>Container Control Center</h1>
+                            <p class="subtitle">Live runtime metrics and one-click actions for running containers.</p>
+                        </div>
+                        <div class="status-strip">
+                            <span id="ws-status" class="pill">Connecting</span>
+                            <span class="pill pill-muted">Updated <strong id="last-updated">just now</strong></span>
+                        </div>
+                    </header>
+
+                    {result_view}
+
+                    <section class="table-card">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th><a href="?sort_key=name">Container Name</a></th>
+                                    <th>Restart</th>
+                                    <th>Stop</th>
+                                    <th><a href="?sort_key=memory">Memory Usage</a></th>
+                                    <th><a href="?sort_key=cpu">CPU Usage</a></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {stats.into_iter()
+                                    .map(|stat| view! {
+                                        <tr id={stat.id.clone()}>
+                                            <td class="name-cell">{ stat.name }</td>
+                                            <td class="action-cell">
+                                                <a class="icon-action" href={"?restart=".to_owned() + &stat.id} title="Restart container">
+                                                    <img src="/assets/reload.svg" alt="Restart"></img>
+                                                </a>
+                                            </td>
+                                            <td class="action-cell">
+                                                <a class="danger-action" href={"?stop=".to_owned() + &stat.id}>Stop</a>
+                                            </td>
+                                            <td>{ stat.memory_usage }</td>
+                                            <td>{ stat.cpu_usage }</td>
+                                        </tr>
+                                    })
+                                    .collect::<Vec<_>>()}
+                            </tbody>
+                        </table>
+                    </section>
+                </main>
+            </body>
     </html>
     }
     .into();
