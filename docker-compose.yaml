@@ -11,7 +11,7 @@ services:
       - traefik_web
     labels: 
       - "traefik.enable=true"
-      - "traefik.http.routers.stats-display.rule=Host(`stats.homelab`)"
+      - "traefik.http.routers.stats-display.rule=Host(`stats.oesterlin.dev`)"
       - "traefik.http.services.stats-display.loadbalancer.server.port=42069"
 
 networks:
